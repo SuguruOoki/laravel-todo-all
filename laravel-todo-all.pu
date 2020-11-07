@@ -1,0 +1,128 @@
+@startuml laravel-todo-all
+title laravel-todo-all ERDiagram
+
+entity "tasks" {
+    + id [PK]
+    ==
+    # epic_id [FK(epics,id)]
+    # label_id [FK(labels,id)]
+    title:varchar(64)
+    contents:longText
+    is_finished:boolean
+    created_at:datetime
+    updated_at:datetime
+}
+
+entity task_github_issue {
+    + task_id [PK, FK(tasks,id)]
+    repo:varchar(128), GitHub repository
+    github_issue_id:number
+    milestones:string, 期間を利用した命名にする
+    assignee:varchar(128)
+    state:GitHubIssuesのstateと同期する
+}
+
+' リンクするのは、GitHubのみ
+entity linked_social_accounts {
+    + user_id [PK, FK(users,id)]
+    ==
+    provider_name:string
+    provider_id:unique, nullable
+}
+
+' entity task_github_pull_requests {
+'     + id [PK]
+'     ==
+'     # task_id [FK(tasks,id)]
+'     repo:string, GitHub repository
+'     github_pull_request_id:number
+'     milestones:string
+'     assignee:
+'     state:GitHubIssuesのstateと同期する
+' }
+
+entity "projects" {
+    + id [PK]
+    ==
+    title:varchar(64)
+    description:varchar(128)
+    created_at:datetime
+    updated_at:datetime
+}
+
+entity "epics" {
+    + id [PK]
+    ==
+    # project_id [FK(projects,id)]
+    title:varchar(64)
+    description:varchar(128)
+    ' epicsの期間を指定するカラムを追加する
+    ' 開始DateTimeと終了DateTime
+    created_at:datetime
+    updated_at:datetime
+}
+
+entity "task_label" {
+    + id [PK]
+    ==
+    # label_id [FK(label,id)]
+    # task_id [FK(task,id)]
+    created_at:datetime
+    updated_at:datetime
+}
+
+entity "labels" {
+    + id [PK]
+    ==
+    title:varchar(64)
+    description:varchar(128)
+    created_at:datetime
+    updated_at:datetime
+}
+
+entity "users" {
+    + id [PK]
+    ==
+    name:varchar(64)
+    password:varchar()
+    created_at:datetime
+    updated_at:datetime
+}
+
+users -- linked_social_accounts
+projects |o--{ epics
+epics |o--{ tasks
+tasks }-ri-{ task_label
+labels }-le-{ task_label
+
+'  /orgs/{org}/issues からIssuesを取得する
+' /repos/{owner}/{repo}/issues
+' 他にIssuesを取れるところがないのかを確認したい
+' Name	Type	In	Description
+' accept	string	header
+' Setting to application/vnd.github.v3+json is recommended. See preview notice
+' owner	string	path
+' repo	string	path
+' milestone	string	query
+' If an integer is passed, it should refer to a milestone by its number field. If the string * is passed, issues with any milestone are accepted. If the string none is passed, issues without milestones are returned.
+' state	string	query
+' Indicates the state of the issues to return. Can be either open, closed, or all.
+' assignee	string	query
+' Can be the name of a user. Pass in none for issues with no assigned user, and * for issues assigned to any user.
+' creator	string	query
+' The user that created the issue.
+' mentioned	string	query
+' A user that's mentioned in the issue.
+' labels	string	query
+' A list of comma separated label names. Example: bug,ui,@high
+' sort	string	query
+' What to sort results by. Can be either created, updated, comments.
+' direction	string	query
+' One of asc (ascending) or desc (descending).
+' since	string	query
+' Only show notifications updated after the given time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
+' per_page	integer	query
+' Results per page (max 100)
+' page	integer	query
+' Page number of the results to fetch.
+@enduml
